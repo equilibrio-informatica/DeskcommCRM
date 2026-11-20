@@ -196,6 +196,22 @@ const GATILHO_ESPERADO: Record<string, { condicao: string | null; efeito: string
       "workflow chamava desde 2026-08-27, e `test:db` sozinho mede um banco VAZIO — constraint " +
       "que só quebra com linha existente passava verde.",
   },
+  // --- ADAPTAÇÃO DE FORK (Equilíbrio): não volta no PR para o oficial ----------
+  // O workflow inteiro só dispara pelo push manual de UMA tag exata; os jobs
+  // ficam sem `if:` de propósito, e a recusa é por passo que FALHA (procedência,
+  // etiqueta já existente), nunca por `skipped`.
+  "hotfix-imagens.yml::conferir": {
+    condicao: null,
+    efeito:
+      "Confere procedência (repositório, tag, branch do hotfix, base v1.113.0), typecheck e os " +
+      "testes da correção. Sem ele, `imagens` publicaria código que ninguém conferiu.",
+  },
+  "hotfix-imagens.yml::imagens": {
+    condicao: null,
+    efeito:
+      "Publica app e worker do hotfix (linux/amd64, etiqueta fixa) no GHCR do fork. Desligá-lo " +
+      "faz a tag existir sem imagem — e a VPS não tem o que puxar.",
+  },
   "vigia-de-colisao.yml::vigia": {
     condicao: null,
     efeito:
