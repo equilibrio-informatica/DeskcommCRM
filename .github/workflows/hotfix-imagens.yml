@@ -10,22 +10,25 @@
 #
 # Disparo: SOMENTE o push MANUAL de uma tag exata (não há push de branch,
 # agenda, PR nem workflow_dispatch). Ex.:
-#   git tag -a hotfix-imagens/1.113.0-ia-calada.1 -m "imagens do hotfix" <commit>
-#   git push equilibrio hotfix-imagens/1.113.0-ia-calada.1
+#   git tag -a hotfix-imagens/1.113.0-ia-calada.2 -m "imagens do hotfix" <commit>
+#   git push equilibrio hotfix-imagens/1.113.0-ia-calada.2
 # O `publish-image.yml` herdado só reage a tags `v*`, então esta tag não o dispara.
 #
 # Compatibilidade com a v1.113.0: o commit precisa descender do commit da
-# release (8d0ba3691), o package.json precisa dizer 1.113.0, e a imagem leva
+# release (8d0ba3691), a última versão do CHANGELOG.md precisa ser 1.113.0 (o
+# package.json é fixo em 0.1.0 e não diz a versão do produto), e a imagem leva
 # APP_VERSION=1.113.0 — é o que a tela de Atualizações e o rollback esperam.
 #
 # Etiqueta IMUTÁVEL: se ela já existir no GHCR, o job recusa em vez de
-# sobrescrever. Correção nova = etiqueta nova (…ia-calada.2) e tag nova.
+# sobrescrever. Correção nova = etiqueta nova (…ia-calada.3) e tag nova.
+# Histórico: a tag …ia-calada.1 (commit 0c2c718da) reprovou na procedência
+# antes de qualquer build — nada foi publicado com a etiqueta .1.
 
 name: Imagens do hotfix (fork)
 
 on:
   push:
-    tags: ["hotfix-imagens/1.113.0-ia-calada.1"]
+    tags: ["hotfix-imagens/1.113.0-ia-calada.2"]
 
 # Nada por padrão; cada job pede só o que usa.
 permissions: {}
@@ -35,7 +38,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ETIQUETA: 1.113.0-ia-calada.1
+  ETIQUETA: 1.113.0-ia-calada.2
   VERSAO_BASE: 1.113.0
   COMMIT_BASE: 8d0ba36914b9dbd00c6bd0852d4adcf160d4d43d
   BRANCH_HOTFIX: hotfix/1.113.0-ia-calada
@@ -60,8 +63,10 @@ jobs:
           [ "${GITHUB_REF}" = "refs/tags/hotfix-imagens/${ETIQUETA}" ] || { echo "::error::ref inesperada: ${GITHUB_REF}"; exit 1; }
           git merge-base --is-ancestor "${COMMIT_BASE}" "${GITHUB_SHA}" || { echo "::error::o commit não descende da v${VERSAO_BASE} (${COMMIT_BASE})"; exit 1; }
           git branch -r --contains "${GITHUB_SHA}" | grep -qxF "  origin/${BRANCH_HOTFIX}" || { echo "::error::o commit não está na branch ${BRANCH_HOTFIX}"; exit 1; }
-          versao=$(node -p "require('./package.json').version")
-          [ "${versao}" = "${VERSAO_BASE}" ] || { echo "::error::package.json diz ${versao}, esperado ${VERSAO_BASE}"; exit 1; }
+          # A versão do produto mora no CHANGELOG.md (e na tag git), não no package.json,
+          # que é fixo em 0.1.0 — foi a suposição errada que reprovou a execução .1.
+          ultima=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md || true)
+          [ "${ultima}" = "## [${VERSAO_BASE}]" ] || { echo "::error::a última versão do CHANGELOG é '${ultima}', esperado ${VERSAO_BASE}"; exit 1; }
           echo "ok: ${GITHUB_SHA} em ${BRANCH_HOTFIX}, sobre v${VERSAO_BASE}"
 
       - uses: ./.github/actions/preparar-node
