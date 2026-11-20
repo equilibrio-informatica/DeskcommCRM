@@ -189,7 +189,11 @@ describe("fiação — a espera humana é paga UMA vez por turno", () => {
     // 2500, não 2400: a foto por URL (R4) rastreia `foto_enviada` no mesmo callback e a
     // âncora `sendInBubbles(` ficou ~20 caracteres mais longe. A janela continua sendo o
     // callback do `send`; o que ela protege (jitter presente, pausa humana ausente) não mudou.
-    const janela = FONTE_INBOUND.slice(i, i + 2500);
+    // 2600, não 2500: a guarda `pessoaAssumiuDuranteOTurno` (a IA não fala depois que
+    // uma pessoa assume) entrou no `enviar` deste mesmo callback e empurrou a âncora
+    // ~90 caracteres. A janela segue dentro do callback — as opções do `sendInBubbles`
+    // fecham bem depois —, e o que ela protege não mudou.
+    const janela = FONTE_INBOUND.slice(i, i + 2600);
     // Os dois convivem: o jitter é throttle anti-ban entre mensagens físicas, o
     // atraso humano é a pausa do turno. Perder o primeiro é afrouxar o anti-ban.
     // Desde a 0499 o jitter LÊ os knobs da conexão (throttleMs + jitterMaxMs,
