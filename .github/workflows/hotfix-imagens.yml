@@ -10,8 +10,8 @@
 #
 # Disparo: SOMENTE o push MANUAL de uma tag exata (não há push de branch,
 # agenda, PR nem workflow_dispatch). Ex.:
-#   git tag -a hotfix-imagens/1.113.0-ia-calada.2 -m "imagens do hotfix" <commit>
-#   git push equilibrio hotfix-imagens/1.113.0-ia-calada.2
+#   git tag -a hotfix-imagens/1.113.0-ia-calada.3 -m "imagens do hotfix" <commit>
+#   git push equilibrio hotfix-imagens/1.113.0-ia-calada.3
 # O `publish-image.yml` herdado só reage a tags `v*`, então esta tag não o dispara.
 #
 # Compatibilidade com a v1.113.0: o commit precisa descender do commit da
@@ -23,12 +23,15 @@
 # sobrescrever. Correção nova = etiqueta nova (…ia-calada.3) e tag nova.
 # Histórico: a tag …ia-calada.1 (commit 0c2c718da) reprovou na procedência
 # antes de qualquer build — nada foi publicado com a etiqueta .1.
+# A etiqueta .2 (commit ad62be470) publicou a correção da IA calada; a .3 soma
+# o rodízio que respeita a IA, a devolução que limpa o setor da IA e o cron que
+# só devolve o dono que veio do sorteio.
 
 name: Imagens do hotfix (fork)
 
 on:
   push:
-    tags: ["hotfix-imagens/1.113.0-ia-calada.2"]
+    tags: ["hotfix-imagens/1.113.0-ia-calada.3"]
 
 # Nada por padrão; cada job pede só o que usa.
 permissions: {}
@@ -38,7 +41,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ETIQUETA: 1.113.0-ia-calada.2
+  ETIQUETA: 1.113.0-ia-calada.3
   VERSAO_BASE: 1.113.0
   COMMIT_BASE: 8d0ba36914b9dbd00c6bd0852d4adcf160d4d43d
   BRANCH_HOTFIX: hotfix/1.113.0-ia-calada
@@ -89,6 +92,11 @@ jobs:
           lib/escalacao/atendimento-manual.test.ts
           tests/unit/messages-handler-silencio-ia-apos-humano.test.ts
           tests/unit/escalacao-retomada.test.ts
+          tests/unit/devolucao-limpa-setor-da-ia.test.ts
+          tests/unit/rodizio-respeita-a-devolucao-a-ia.test.ts
+          tests/unit/motivo-de-parada-tem-frase.test.ts
+          app/api/v1/conversations/[id]/close/route.test.ts
+          app/api/v1/conversations/bulk/route.test.ts
 
   imagens:
     needs: [conferir]
